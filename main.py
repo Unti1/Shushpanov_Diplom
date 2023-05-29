@@ -1,58 +1,106 @@
-import numpy as np
-import matplotlib.pyplot as plt
+from func import *
+import tkinter as tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
-# Параметры симуляции.
-u = 1.0   # Скорость переноса.
-mu = 0.1  # Коэффициент диффузии.
-tau = 0.01  # Коэффициент сглаживания.
-f = 0.01  # Внешний источник или сила.
+# Создаем основное окно.
+root = tk.Tk()
 
-# Параметры, связанные с планктоном.
-alpha = 0.5  # Параметр влияния температуры.
-beta = 0.5   # Параметр влияния солености.
-Topt = 25.0  # Оптимальная температура.
-Copt = 30.0  # Оптимальная соленость.
+# Создаем фигуру для графика.
+fig = Figure(figsize=(5, 4), dpi=100)
 
-# Текущие условия.
-T = 20.0  # Текущая температура.
-C = 20.0  # Текущая соленость.
+# Функция для обновления графика.
+def update_plot():
+    global S
+    # Получаем параметры из полей ввода.
+    u = float(u_entry.get())
+    mu = float(mu_entry.get())
+    tau = float(tau_entry.get())
+    f = float(f_entry.get())
+    T = float(T_entry.get())
+    C = float(C_entry.get())
+    solver = solver_var.get()
 
-# Параметры сетки.
-nx = 100  # Количество точек сетки по оси x.
-nt = 100  # Количество временных шагов.
-dx = 1.0  # Шаг сетки по x.
-dt = 0.01  # Размер временного шага.
+    # Обнуляем массив S.
+    S.fill(0.0)
+    # Устанавливаем начальное условие.
+    S[0, :] = np.sin(2 * np.pi * np.arange(nx) / nx)
 
-# Инициализируем массив для хранения концентрации S.
-S = np.zeros((nt, nx))
+    # Выбираем решение уравнения в соответствии с выбором пользователя.
+    if solver == 'With Reg':
+        solve_eq_with_reg(S, T, C, u, mu, tau,f)
+    elif solver == 'Without Reg':
+        solve_eq_without_reg(S, T, C, u, mu, tau,f)
+    elif solver == 'With Reg no temp and sal':
+        solve_eq_with_reg_without_temp_and_sal(S, u, mu, tau,f)
+    elif solver == 'Without Reg no temp and sal':
+        solve_eq_without_reg_without_temp_and_sal(S, T, C, u, mu, tau,f)
 
-# Устанавливаем начальное условие.
-S[0, :] = np.sin(2 * np.pi * np.arange(nx) / nx)
+    # Очищаем график.
+    fig.clear()
+    a = fig.add_subplot(111)
+    # Рисуем новый график.
+    a.imshow(S, aspect='auto', cmap='hot', origin='lower')
 
-# Вычисляем температурный и солевой члены роста планктонных популяций.
-def compute_growth_terms(T, C, m):
-    temperature_term = -alpha * m * ((T - Topt) / Topt) ** 2
-    salinity_term = -beta * m * ((C - Copt) / Copt) ** 2
-    return temperature_term, salinity_term
+    # Обновляем канвас.
+    canvas.draw()
 
-# Шаги по времени.
-for n in range(nt - 2):  # Уменьшаем диапазон на 1, чтобы избежать выхода за границы массива.
-    for i in range(1, nx - 1):
-        # Расчет членов уравнения.
-        advection_term = u * (S[n, i + 1] - S[n, i - 1]) / (2 * dx)
-        diffusion_term = mu * (S[n, i + 1] - 2 * S[n, i] + S[n, i - 1]) / dx ** 2
-        temperature_term, salinity_term = compute_growth_terms(T, C, 1)
-        growth_term = np.exp(temperature_term) * np.exp(salinity_term) * S[n, i]
-        regularizer_term = tau / dt ** 2 + u / dx + mu / dx ** 2
+# Создаем поля ввода для параметров.
+u_label = tk.Label(root, text='Скорость переноса:')
+u_label.pack()
+u_entry = tk.Entry(root)
+u_entry.pack()
+u_entry.insert(0, '1.0')
 
-        # Обновление S[n + 1, i] с учетом всех членов.
-        S[n + 1, i] = (S[n, i] + dt * (advection_term - diffusion_term + growth_term)) / (1 + dt * regularizer_term)
+mu_label = tk.Label(root, text='Коэффициент диффузии:')
+mu_label.pack()
+mu_entry = tk.Entry(root)
+mu_entry.pack()
+mu_entry.insert(0, '0.1')
 
-# График решения.
-plt.figure(figsize=(10, 6))
-plt.imshow(S, aspect='auto', cmap='hot', origin='lower')
-plt.colorbar(label='Концентрация')
-plt.xlabel('X')
-plt.ylabel('Время')
-plt.title('Пространственно-временная эволюция концентрации')
-plt.show()
+tau_label = tk.Label(root, text='Коэффициент сглаживания:')
+tau_label.pack()
+tau_entry = tk.Entry(root)
+tau_entry.pack()
+tau_entry.insert(0, '0.01')
+
+f_label = tk.Label(root, text='Внешний источник или сила:')
+f_label.pack()
+f_entry = tk.Entry(root)
+f_entry.pack()
+f_entry.insert(0, '0.01')
+
+T_label = tk.Label(root, text='Температура, %')
+T_label.pack()
+T_entry = tk.Entry(root)
+T_entry.pack()
+T_entry.insert(0, '20.0')
+
+C_label = tk.Label(root, text='Соленость, %')
+C_label.pack()
+C_entry = tk.Entry(root)
+C_entry.pack()
+C_entry.insert(0, '20.0')
+
+# Создаем радиокнопки для выбора решения.
+solver_var = tk.StringVar(value='С регуляризацией')
+with_reg_rb = tk.Radiobutton(root, text='С регуляризацией', variable=solver_var, value='With Reg')
+with_reg_rb.pack()
+without_reg_rb = tk.Radiobutton(root, text='Без регуляризацией', variable=solver_var, value='Without Reg')
+without_reg_rb.pack()
+with_reg_no_temp_and_sal_rb = tk.Radiobutton(root, text='С регуляризацией, без солей и температуры', variable=solver_var, value='With Reg no temp and sal')
+with_reg_no_temp_and_sal_rb.pack()
+without_reg_no_temp_and_sal_rb = tk.Radiobutton(root, text='Без регуляризацией, без солей и температуры', variable=solver_var, value='Without Reg no temp and sal')
+without_reg_no_temp_and_sal_rb.pack()
+
+# Создаем кнопку для обновления графика.
+update_button = tk.Button(root, text='Обновить график', command=update_plot)
+update_button.pack()
+
+# Создаем канвас для отображения графика.
+canvas = FigureCanvasTkAgg(fig, master=root)
+canvas.draw()
+canvas.get_tk_widget().pack()
+
+# Запускаем основной цикл.
+root.mainloop()

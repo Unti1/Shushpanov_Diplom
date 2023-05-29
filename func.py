@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Параметры симуляции.
-u = 1.0   # Скорость переноса.
-mu = 0.1  # Коэффициент диффузии.
-tau = 0.01  # Коэффициент сглаживания.
-f = 0.01  # Внешний источник или сила.
+# # Параметры симуляции.
+# u = 1.0   # Скорость переноса.
+# mu = 0.01  # Коэффициент диффузии.
+# tau = 0.01  # Коэффициент сглаживания.
+# f = 0.01  # Внешний источник или сила.
 
 # Параметры, связанные с планктоном.
 alpha = 0.5  # Параметр влияния температуры.
@@ -37,7 +37,7 @@ def compute_growth_terms(T, C, m):
     return temperature_term, salinity_term
 
 # Решение уравнения с регуляризатором
-def compute_next_step_reg(S, n, i, T, C, m):
+def compute_next_step_reg(S, n, i, T, C, m, u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
     advection_term = u * (S[n, i + 1] - S[n, i - 1]) / (2 * dx)
     diffusion_term = mu * (S[n, i + 1] - 2 * S[n, i] + S[n, i - 1]) / dx ** 2
     temperature_term, salinity_term = compute_growth_terms(T, C, m)
@@ -48,14 +48,14 @@ def compute_next_step_reg(S, n, i, T, C, m):
     S[n + 1, i] = (S[n, i] + dt * (advection_term - diffusion_term + growth_term + regularizer_term)) / (1 + dt)
 
 # Решение уравнения с регуляризатором
-def solve_eq_with_reg():
+def solve_eq_with_reg(S,T,C,u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
     for n in range(2, nt - 1):
         for i in range(1, nx - 1):
-            compute_next_step_reg(S, n, i, T, C, 1)
+            compute_next_step_reg(S, n, i, T, C, 1, u = u , mu = mu, tau = tau, f = f)
 
 
 # Решение уравнения без регуляризатора
-def compute_next_step_no_reg(S, n, i, T, C, m):
+def compute_next_step_no_reg(S, n, i, T, C, m, u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
     advection_term = u * (S[n, i + 1] - S[n, i - 1]) / (2 * dx)
     diffusion_term = mu * (S[n, i + 1] - 2 * S[n, i] + S[n, i - 1]) / dx ** 2
     temperature_term, salinity_term = compute_growth_terms(T, C, m)
@@ -65,13 +65,13 @@ def compute_next_step_no_reg(S, n, i, T, C, m):
     S[n + 1, i] = (S[n, i] + dt * (advection_term - diffusion_term + growth_term)) / (1 + dt)
 
 # Решение уравнения без регуляризатора
-def solve_eq_without_reg():
+def solve_eq_without_reg(S, T, C, u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
     for n in range(nt - 2):
         for i in range(1, nx - 1):
-            compute_next_step_no_reg(S, n, i, T, C, 1)
+            compute_next_step_no_reg(S, n, i, T, C, 1, u = u , mu = mu, tau = tau, f = f)
 
 # Решение уравнения с регуляризатором без учета солености и температуры
-def compute_next_step_reg_without_temp_and_sal(S, n, i):
+def compute_next_step_reg_without_temp_and_sal(S, n, i, u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
     advection_term = u * (S[n, i + 1] - S[n, i - 1]) / (2 * dx)
     diffusion_term = mu * (S[n, i + 1] - 2 * S[n, i] + S[n, i - 1]) / dx ** 2
     regularizer_term = tau * (S[n, i] - 2 * S[n-1, i] + S[n-2, i]) / dt ** 2
@@ -79,38 +79,20 @@ def compute_next_step_reg_without_temp_and_sal(S, n, i):
     # Обновление S[n + 1, i] с учетом всех членов.
     S[n + 1, i] = (S[n, i] + dt * (advection_term - diffusion_term + regularizer_term)) / (1 + dt)
 
-def solve_eq_with_reg_without_temp_and_sal():
+def solve_eq_with_reg_without_temp_and_sal(S, u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
     for n in range(2, nt - 1):
         for i in range(1, nx - 1):
-            compute_next_step_reg_without_temp_and_sal(S, n, i)
+            compute_next_step_reg_without_temp_and_sal(S, n, i, u = u , mu = mu, tau = tau, f = f)
 
 # Решение уравнения без регуляризатора без учета солености и температуры
-def compute_next_step_no_reg_without_temp_and_sal(S, n, i):
+def compute_next_step_no_reg_without_temp_and_sal(S, n, i, u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
     advection_term = u * (S[n, i + 1] - S[n, i - 1]) / (2 * dx)
     diffusion_term = mu * (S[n, i + 1] - 2 * S[n, i] + S[n, i - 1]) / dx ** 2
 
     # Обновление S[n + 1, i] с учетом всех членов.
     S[n + 1, i] = (S[n, i] + dt * (advection_term - diffusion_term)) / (1 + dt)
 
-def solve_eq_without_reg_without_temp_and_sal():
+def solve_eq_without_reg_without_temp_and_sal(S, n, i,u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
     for n in range(nt - 2):
         for i in range(1, nx - 1):
-            compute_next_step_no_reg_without_temp_and_sal(S, n, i)
-
-# Вызываем функции
-# solve_eq_with_reg()
-# или
-# solve_eq_without_reg()
-# или
-# solve_eq_with_reg_without_temp_and_sal()
-# или
-# solve_eq_without_reg_without_temp_and_sal()
-
-# График решения.
-plt.figure(figsize=(10, 6))
-plt.imshow(S, aspect='auto', cmap='hot', origin='lower')
-plt.colorbar(label='Концентрация')
-plt.xlabel('X')
-plt.ylabel('Время')
-plt.title('Пространственно-временная эволюция концентрации')
-plt.show()
+            compute_next_step_no_reg_without_temp_and_sal(S, n, i, u = u , mu = mu, tau = tau, f = f)
