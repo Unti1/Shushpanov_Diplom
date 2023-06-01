@@ -10,15 +10,15 @@ root = tk.Tk()
 fig = Figure(figsize=(5, 4), dpi=100)
 
 # Функция для обновления графика.
-def update_plot():
+def update_plot(*args):
     global S
     # Получаем параметры из полей ввода.
-    u = float(u_entry.get())
-    mu = float(mu_entry.get())
-    tau = float(tau_entry.get())
-    f = float(f_entry.get())
-    T = float(T_entry.get())
-    C = float(C_entry.get())
+    u = float(u_slider.get())
+    mu = float(mu_slider.get())
+    tau = float(tau_slider.get())
+    f = float(f_slider.get())
+    T = float(T_slider.get())
+    C = float(C_slider.get())
     solver = solver_var.get()
 
     # Обнуляем массив S.
@@ -36,51 +36,53 @@ def update_plot():
     elif solver == 'Without Reg no temp and sal':
         solve_eq_without_reg_without_temp_and_sal(S, T, C, u, mu, tau,f)
 
-    # Очищаем график.
+    # Очищаем и рисуем новый график
     fig.clear()
-    a = fig.add_subplot(111)
-    # Рисуем новый график.
-    a.imshow(S, aspect='auto', cmap='hot', origin='lower')
+    ax = fig.add_subplot(111)
+    ax.imshow(S, aspect='auto', cmap='hot', origin='lower')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Время')
+    cbar = plt.colorbar(ax.imshow(S, aspect='auto', cmap='hot', origin='lower'))
+    cbar.set_label('Концентрация')
+    canvas.draw_idle()
 
-    # Обновляем канвас.
-    canvas.draw()
-
-# Создаем поля ввода для параметров.
+# Создаем слайдеры для параметров.
 u_label = tk.Label(root, text='Скорость переноса:')
 u_label.pack()
-u_entry = tk.Entry(root)
-u_entry.pack()
-u_entry.insert(0, '1.0')
+u_slider = tk.Scale(root, from_=0, to=10, resolution=0.1, orient=tk.HORIZONTAL, command=update_plot)
+u_slider.set(1.0)
+u_slider.pack()
 
 mu_label = tk.Label(root, text='Коэффициент диффузии:')
 mu_label.pack()
-mu_entry = tk.Entry(root)
-mu_entry.pack()
-mu_entry.insert(0, '0.1')
+mu_slider = tk.Scale(root, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL)
+mu_slider.set(0.1)
+mu_slider.pack()
 
 tau_label = tk.Label(root, text='Коэффициент сглаживания:')
 tau_label.pack()
-tau_entry = tk.Entry(root)
-tau_entry.pack()
-tau_entry.insert(0, '0.01')
+tau_slider = tk.Scale(root, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, command=update_plot)
+tau_slider.set(0.01)
+tau_slider.pack()
 
 f_label = tk.Label(root, text='Внешний источник или сила:')
 f_label.pack()
-f_entry = tk.Entry(root)
-f_entry.pack()
-f_entry.insert(0, '0.01')
+f_slider = tk.Scale(root, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, command=update_plot)
+f_slider.set(0.01)
+f_slider.pack()
 
 T_label = tk.Label(root, text='Температура, %')
 T_label.pack()
-T_entry = tk.Entry(root)
-T_entry.pack()
-T_entry.insert(0, '20.0')
+T_slider = tk.Scale(root, from_=0, to=100, resolution=1, orient=tk.HORIZONTAL, command=update_plot)
+T_slider.set(20.0)
+T_slider.pack()
 
 C_label = tk.Label(root, text='Соленость, %')
 C_label.pack()
-C_entry = tk.Entry(root)
-C_entry.pack()
-C_entry.insert(0, '20.0')
+C_slider = tk.Scale(root, from_=0, to=100, resolution=1, orient=tk.HORIZONTAL, command=update_plot)
+C_slider.set(20.0)
+C_slider.pack()
+
 
 # Создаем радиокнопки для выбора решения.
 solver_var = tk.StringVar(value='С регуляризацией')
