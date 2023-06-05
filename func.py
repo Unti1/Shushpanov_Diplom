@@ -38,7 +38,7 @@ def compute_growth_terms(T, C, m):
 
 # Решение уравнения с регуляризатором
 def compute_next_step_reg(S, n, i, T, C, m, u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
-    advection_term = u * (S[n, i + 1] - S[n, i - 1]) / (2 * dx)
+    advection_term = u * (S[n, i + 1] - S[n, i]) / (2 * dx)
     diffusion_term = mu * (S[n, i + 1] - 2 * S[n, i] + S[n, i - 1]) / dx ** 2
     temperature_term, salinity_term = compute_growth_terms(T, C, m)
     growth_term = np.exp(temperature_term) * np.exp(salinity_term) * S[n, i]
@@ -56,7 +56,7 @@ def solve_eq_with_reg(S,T,C,u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
 
 # Решение уравнения без регуляризатора
 def compute_next_step_no_reg(S, n, i, T, C, m, u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
-    advection_term = u * (S[n, i + 1] - S[n, i - 1]) / (2 * dx)
+    advection_term = u * (S[n, i + 1] - S[n, i]) / (2 * dx)
     diffusion_term = mu * (S[n, i + 1] - 2 * S[n, i] + S[n, i - 1]) / dx ** 2
     temperature_term, salinity_term = compute_growth_terms(T, C, m)
     growth_term = np.exp(temperature_term) * np.exp(salinity_term) * S[n, i]
@@ -72,7 +72,7 @@ def solve_eq_without_reg(S, T, C, u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
 
 # Решение уравнения с регуляризатором без учета солености и температуры
 def compute_next_step_reg_without_temp_and_sal(S, n, i, u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
-    advection_term = u * (S[n, i + 1] - S[n, i - 1]) / (2 * dx)
+    advection_term = u * (S[n, i + 1] - S[n, i]) / (2 * dx)
     diffusion_term = mu * (S[n, i + 1] - 2 * S[n, i] + S[n, i - 1]) / dx ** 2
     regularizer_term = tau * (S[n, i] - 2 * S[n-1, i] + S[n-2, i]) / dt ** 2
 
@@ -86,7 +86,7 @@ def solve_eq_with_reg_without_temp_and_sal(S, u = 1.0 , mu = 0.01, tau = 0.01, f
 
 # Решение уравнения без регуляризатора без учета солености и температуры
 def compute_next_step_no_reg_without_temp_and_sal(S, n, i, u = 1.0 , mu = 0.01, tau = 0.01, f = 0.01):
-    advection_term = u * (S[n, i + 1] - S[n, i - 1]) / (2 * dx)
+    advection_term = u * (S[n, i + 1] - S[n, i]) / (2 * dx)
     diffusion_term = mu * (S[n, i + 1] - 2 * S[n, i] + S[n, i - 1]) / dx ** 2
 
     # Обновление S[n + 1, i] с учетом всех членов.
